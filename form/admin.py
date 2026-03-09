@@ -1,14 +1,5 @@
 from django.contrib import admin
-from .models import MetricResponse, Document, InstitutionSettings
-
-
-@admin.register(MetricResponse)
-class MetricResponseAdmin(admin.ModelAdmin):
-    list_display  = ['metric_id', 'metric_type', 'user', 'saved', 'updated_at']
-    list_filter   = ['metric_type', 'saved']
-    search_fields = ['metric_id', 'user__username']
-    ordering      = ['metric_id']
-
+from .models import Document, InstitutionSettings
 
 @admin.register(Document)
 class DocumentAdmin(admin.ModelAdmin):
