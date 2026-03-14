@@ -291,9 +291,21 @@ class DepartmentDetailView(AdminOnly):
         err = self.check_admin(request)
         if err: return err
         dept = get_object_or_404(Department, pk=pk)
-        dept.delete()
-        return Response(status=204)
 
+        try:
+            from authentication.models import UserProfile
+            UserProfile.objects.filter(department=dept).update(department=None)
+            dept.hod = None
+            dept.save(update_fields=['hod'])
+            dept.delete()
+
+            return Response(status=204)
+
+        except Exception as e:
+            return Response(
+                {'error': f'Could not delete department: {str(e)}'},
+                status=500
+            )
 
 class HODCreateView(AdminOnly):
     """Admin creates a HOD account and links it to a department."""
