@@ -1,25 +1,41 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
+from .models import UserProfile
 
-class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=6)
-    password2 = serializers.CharField(write_only=True)
-
-    class Meta:
-        model = User
-        fields = ('username', 'email', 'password', 'password2')
-
-    def validate(self, data):
-        if data['password'] != data['password2']:
-            raise serializers.ValidationError({'password': 'Passwords do not match.'})
-        return data
-
-    def create(self, validated_data):
-        validated_data.pop('password2')
-        return User.objects.create_user(**validated_data)
 
 class UserSerializer(serializers.ModelSerializer):
+    role          = serializers.SerializerMethodField()
+    department_id = serializers.SerializerMethodField()
+    department    = serializers.SerializerMethodField()
+    stream        = serializers.SerializerMethodField()
+
     class Meta:
-        model = User
-        fields = ('id', 'username', 'email')
-        # check
+        model  = User
+        fields = ('id', 'username', 'email', 'role', 'department_id', 'department', 'stream')
+
+    def get_role(self, obj):
+        try:
+            return obj.profile.role
+        except UserProfile.DoesNotExist:
+            return 'hod'
+
+    def get_department_id(self, obj):
+        try:
+            dept = obj.profile.department
+            return dept.id if dept else None
+        except UserProfile.DoesNotExist:
+            return None
+
+    def get_department(self, obj):
+        try:
+            dept = obj.profile.department
+            return dept.name if dept else None
+        except UserProfile.DoesNotExist:
+            return None
+
+    def get_stream(self, obj):
+        try:
+            dept = obj.profile.department
+            return dept.stream if dept else None
+        except UserProfile.DoesNotExist:
+            return None

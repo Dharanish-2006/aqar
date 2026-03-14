@@ -1,22 +1,46 @@
 from rest_framework import serializers
-from .models import (
-    InstitutionSettings, Document,
-    Metric_1_1, Metric_1_1_3, Metric_1_2_1, Metric_1_2_2_1_2_3,
-    Metric_1_3_2, Metric_1_3_3,
-    Metric_2_1, Metric_2_2, Metric_2_3, Metric_2_1_1, Metric_2_1_2,
-    Metric_2_4_1_2_4_3, Metric_2_6_3,
-    Metric_3_1, Metric_3_2, Metric_2_4_2_3_1_2_3_3_1,
-    Metric_3_1_1_3_1_3, Metric_3_2_2, Metric_3_3_2, Metric_3_3_3,
-    Metric_3_4_2, Metric_3_4_3_3_4_4, Metric_3_5_1, Metric_3_5_2,
-    Metric_4_1_3, Metric_4_1_4_4_4_1, Metric_4_2_2_4_2_3,
-    Metric_5_1_1_5_1_2, Metric_5_1_3, Metric_5_1_4,
-    Metric_5_2_1, Metric_5_2_2, Metric_5_2_3, Metric_5_3_1, Metric_5_3_3,
-    Metric_6_2_3, Metric_6_3_2, Metric_6_3_3, Metric_6_3_4,
-    Metric_6_4_2, Metric_6_5_3,
-)
-
+from .models import *
 
 # ── Shared ────────────────────────────────────────────────────────────────────
+
+class SubmissionStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = SubmissionStatus
+        fields = ['is_submitted', 'submitted_at']
+
+
+class DepartmentSerializer(serializers.ModelSerializer):
+    stream_display = serializers.CharField(source='get_stream_display', read_only=True)
+    is_submitted   = serializers.SerializerMethodField()
+    submitted_at   = serializers.SerializerMethodField()
+    hod_username   = serializers.SerializerMethodField()
+
+    class Meta:
+        model  = Department
+        fields = ['id', 'name', 'stream', 'stream_display',
+                  'hod_username', 'is_submitted', 'submitted_at', 'created_at']
+        read_only_fields = ['created_at']
+
+    def get_is_submitted(self, obj):
+        try:
+            return obj.submission.is_submitted
+        except Exception:
+            return False
+
+    def get_submitted_at(self, obj):
+        try:
+            return obj.submission.submitted_at
+        except Exception:
+            return None
+
+    def get_hod_username(self, obj):
+        return obj.hod.username if obj.hod else None
+
+
+class DepartmentDetailSerializer(DepartmentSerializer):
+    """Same as DepartmentSerializer — extended if needed later."""
+    pass
+
 
 class DocumentSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
@@ -138,7 +162,7 @@ class Metric_2_4_1_Serializer(serializers.ModelSerializer):
     class Meta:
         model  = Metric_2_4_1_2_4_3
         fields = ['id', 'teacher_name', 'pan', 'designation', 'year_of_appointment',
-                  'nature_of_appointment', 'department', 'years_of_experience', 'still_serving']
+                  'nature_of_appointment', 'department_name', 'years_of_experience', 'still_serving']
 
 
 class Metric_2_6_3_Serializer(serializers.ModelSerializer):
@@ -146,6 +170,14 @@ class Metric_2_6_3_Serializer(serializers.ModelSerializer):
         model  = Metric_2_6_3
         fields = ['id', 'year', 'program_code', 'program_name',
                   'students_appeared', 'students_passed']
+
+
+class Metric_2_4_2_Serializer(serializers.ModelSerializer):
+    class Meta:
+        model  = Metric_2_4_2_3_1_2_3_3_1
+        fields = ['id', 'teacher_name', 'qualification', 'qualification_year',
+                  'is_research_guide', 'recognition_year', 'still_serving',
+                  'scholar_name', 'scholar_reg_year', 'thesis_title']
 
 
 # ── Criterion 3 ───────────────────────────────────────────────────────────────
@@ -161,14 +193,6 @@ class Metric_3_2_Serializer(serializers.ModelSerializer):
     class Meta:
         model  = Metric_3_2
         fields = ['id', 'year', 'sanctioned_posts', 'document_link']
-
-
-class Metric_2_4_2_Serializer(serializers.ModelSerializer):
-    class Meta:
-        model  = Metric_2_4_2_3_1_2_3_3_1
-        fields = ['id', 'teacher_name', 'qualification', 'qualification_year',
-                  'is_research_guide', 'recognition_year', 'still_serving',
-                  'scholar_name', 'scholar_reg_year', 'thesis_title']
 
 
 class Metric_3_1_1_Serializer(serializers.ModelSerializer):
@@ -187,15 +211,14 @@ class Metric_3_2_2_Serializer(serializers.ModelSerializer):
 class Metric_3_3_2_Serializer(serializers.ModelSerializer):
     class Meta:
         model  = Metric_3_3_2
-        fields = ['id', 'paper_title', 'authors', 'department',
+        fields = ['id', 'paper_title', 'authors', 'dept_name',   # ← was 'department'
                   'journal_name', 'year', 'issn', 'ugc_link']
+ 
 
 
 class Metric_3_3_3_Serializer(serializers.ModelSerializer):
     class Meta:
         model  = Metric_3_3_3
-        # affiliating_institute exists in models.py but not in naacData columns —
-        # included here so data is not lost if entered via admin
         fields = ['id', 'sl_no', 'teacher_name', 'book_chapter_title', 'paper_title',
                   'proceedings_title', 'conference_name', 'national_international',
                   'year_of_publication', 'isbn_issn', 'affiliating_institute', 'publisher']
