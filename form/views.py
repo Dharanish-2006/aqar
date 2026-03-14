@@ -291,19 +291,22 @@ class DepartmentDetailView(AdminOnly):
         err = self.check_admin(request)
         if err: return err
         dept = get_object_or_404(Department, pk=pk)
-
         try:
             from authentication.models import UserProfile
+            import traceback
             UserProfile.objects.filter(department=dept).update(department=None)
-            dept.hod = None
-            dept.save(update_fields=['hod'])
+
+            Department.objects.filter(pk=pk).update(hod=None)
+            dept.refresh_from_db()
+
             dept.delete()
 
             return Response(status=204)
 
         except Exception as e:
+            import traceback as tb_module
             return Response(
-                {'error': f'Could not delete department: {str(e)}'},
+                {'error': str(e), 'traceback': tb_module.format_exc()},
                 status=500
             )
 
