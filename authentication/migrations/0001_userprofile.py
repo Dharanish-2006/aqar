@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('form', '0007_rename_dept_field_in_2_4_1'),
+        ('form', '0007_rename_colliding_department_fields'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
